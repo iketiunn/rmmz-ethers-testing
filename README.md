@@ -1,0 +1,3 @@
+- `wget -o ethers.js https://cdnjs.cloudflare.com/ajax/libs/ethers/5.6.2/ethers.umd.min.js`  (in libs)
+- add `js/libs/ethers.min.js` in `main.js`
+- write your plugin in `plugins/`
