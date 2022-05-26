@@ -20,6 +20,12 @@
  * @desc Wallet private key during developing.
  * @default ""
  * 
+ * @param ETHERSCAN_API_KEY
+ * @text Etherscan api key
+ * @type string
+ * @desc For query on chain data
+ * @default ""
+ * 
  * @command sign_in
  * @text Sign in wallet
  * @desc Sign in wallet with different methods
@@ -32,6 +38,10 @@
   const FILE_NAME = 'Ethers'
   const userParams = PluginManager.parameters(FILE_NAME)
   const DEV_PRIVATE_KEY = userParams['DEV_PRIVATE_KEY'] || ""
+  // TODO: gateway url + key
+  const ETHERSCAN_API_KEY = userParams['ETHERSCAN_API_KEY'] || ""
+  // TODO: set provider network
+  
 
   /**
    * Private Variables:
@@ -40,7 +50,7 @@
    * start with _ -> system defined, not not change it
    */
   const provider = ethers.getDefaultProvider("homestead", {
-    etherscan: "" // TODO: remove it before upload
+    etherscan: ETHERSCAN_API_KEY
   });
   let $privateKey = DEV_PRIVATE_KEY // Or user input
   let _wallet
@@ -57,25 +67,20 @@
    */
   PluginManager.registerCommand(FILE_NAME, "sign_in", async args =>
     // Chose a way to sign in, private key only now
-    _wallet = await signIn({
+    _wallet = await signInCommand({
       privateKey: $privateKey
     })
   )
 
   PluginManager.registerCommand(FILE_NAME, "get_user_assets", async args => {
-    const somebodyAddress = '0xF4Fb9FA23edB32215E5284cf7dBfDB5607d51a5b' // TODO: Should current signer
-    const assets = await getUsersAssets(_contract, somebodyAddress)
-    // const assets = await getUsersAssets(_contract, _wallet.address)
-    console.log(assets)
-    const img = ImageManager.loadBitmapFromUrl(assets[0].imageUrl)
-    console.log(img)
-    // Game_Picture.prototype.showPicture(
-    //   911,
-    //   "https://cloudflare-ipfs.com/ipfs/QmbvtcMPRCCR595DpRtHfvFvTcKNAo7B4eWc5wicSp2rjE",
-    //   0,
-    //   0,
-    //   0, 100, 100, 255, 0
-    // )
+    const somebodyAddress = '0xB5bD85e680606C9d1d824A40589AF762ACB376B7' // TODO: Should current signer
+    const assets = await getUsersAssetsCommand(_contract, somebodyAddress)
+    if (assets.length === 0) {
+      $gameMessage.add("0 assets found...")
+      return
+    }
+    $gameMessage.add(`${assets.length} assets found...\nOpen the first one.`)  
+    showNFT(assets[0].imageUrl)
   })
 })()
 
@@ -83,7 +88,7 @@
  * Private functions
  */
 
-async function signIn({
+async function signInCommand({
   privateKey
 }) {
   if (privateKey !== "") {
@@ -107,7 +112,7 @@ async function getCollectionsFromMarket() {
 
 }
 
-async function getUsersAssets(contract, userAddress) {
+async function getUsersAssetsCommand(contract, userAddress) {
   const assets = []
   await contract.balanceOf(userAddress).then(async balance => {
     console.debug(userAddress, 'total balance:', balance)
@@ -129,8 +134,16 @@ async function getUsersAssets(contract, userAddress) {
   return assets
 }
 
-async function showUserAssets() {
-  
+async function showNFT(url) {
+  const bitmap = ImageManager.loadBitmapFromUrl(url)
+  const img = new Sprite(bitmap);
+  SceneManager._scene.addChildAt(img, 2) // TODO: positioning
+  // TODO: scale based on relative size
+  img.scale.x = 0.4
+  img.scale.y = 0.4
+  img._refresh()
+
+  setTimeout(() => img.destroy(), 5000)
 }
 
 
